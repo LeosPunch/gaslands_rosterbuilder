@@ -231,6 +231,20 @@ function addUnit(){
 
     cost+=vehicles[vKey].cost;
     text+=`${vKey} [${vehicles[vKey].cost}]\n`;
+	let crewAdded=false;
+
+document.querySelectorAll("#crewWeapons input").forEach(i=>{
+    const key=findInDB(i.value, crewWeaponsDB);
+    if(key){
+        crewAdded=true;
+        cost+=crewWeaponsDB[key].cost;
+        text+=`Экипаж: ${key} [${crewWeaponsDB[key].cost}]\n`;
+    }
+});
+
+if(!crewAdded){
+    text+=`Экипаж: Пистолет [0]\n`;
+}
 
     document.querySelectorAll("#weapons input").forEach(i=>{
         const key=findInDB(i.value, weaponsDB);

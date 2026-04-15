@@ -32,7 +32,8 @@ button { margin:5px; padding:5px 10px; cursor:pointer; }
 <div id="upgrades"></div>
 <button onclick="addUpgrade()">+ апгрейд</button>
 
-<h2>Стоимость текущей машинки: <span id="currentCost">0</span></h2>
+<h2>Стоимость машинки: <span id="currentCost">0</span></h2>
+<h2>Занятые слоты: <span id="slots">0/0</span></h2>
 
 <br>
 <button onclick="addUnit()">Добавить</button>
@@ -50,25 +51,25 @@ button { margin:5px; padding:5px 10px; cursor:pointer; }
 <script>
 // ===== БАЗЫ =====
 const vehicles = {
-    "Багги": { cost:6 },
-    "Легковушка": { cost:12 },
-    "Джип/Пикап": { cost:15 },
-    "Гоночная машина": { cost:15 },
-    "Грузовик/Фургон": { cost:15 },
-    "Тяжелый грузовик": { cost:25 },
-    "Автобус": { cost:30 },
-    "Бронетранспортер": { cost:35 },
-    "Драгстер": { cost:5 },
-    "Мотоцикл": { cost:5 },
-    "Мотоцикл с коляской": { cost:8 },
-    "Фургон мороженщика": { cost:8 },
-    "Автожир": { cost:10 },
-    "Скорая помощь": { cost:20 },
-    "Техпомощь": { cost:25 },
-    "Монстр-трак": { cost:25 },
-    "Вертолет": { cost:30 },
-    "Танк": { cost:40 },
-    "Бронефура": { cost:40 }
+    "Багги": { cost:6, slots:2 },
+    "Легковушка": { cost:12, slots:2 },
+    "Джип/Пикап": { cost:15, slots:3 },
+    "Гоночная машина": { cost:15, slots:2 },
+    "Грузовик/Фургон": { cost:15, slots:3 },
+    "Тяжелый грузовик": { cost:25, slots:5 },
+    "Автобус": { cost:30, slots:3 },
+    "Бронетранспортер": { cost:35, slots:1 },
+    "Драгстер": { cost:5, slots:2 },
+    "Мотоцикл": { cost:5, slots:1 },
+    "Мотоцикл с коляской": { cost:8, slots:2 },
+    "Фургон мороженщика": { cost:8, slots:2 },
+    "Автожир": { cost:10, slots:0 },
+    "Скорая помощь": { cost:20, slots:3 },
+    "Техпомощь": { cost:25, slots:3 },
+    "Монстр-трак": { cost:25, slots:2 },
+    "Вертолет": { cost:30, slots:4 },
+    "Танк": { cost:40, slots:4 },
+    "Бронефура": { cost:40, slots:5 }
 };
 
 const crewWeaponsDB = {
@@ -84,47 +85,47 @@ const crewWeaponsDB = {
 };
 
 const weaponsDB = {
-    "Пулемет": { cost:2 },
-    "Тяжелый Пулемет": { cost:3 },
-    "Гатлинг": { cost:5 },
-    "125мм Пушка": { cost:6 },
-    "Молниевая Пушка": { cost:6 },
-    "Гранатомет": { cost:4 },
-    "BFG": { cost:1 },
-    "Лазер": { cost:5 },
-    "Луч Смерти": { cost:3 },
-    "Огнемет": { cost:4 },
-    "Манипулятор": { cost:6 },
-    "Гравипушка": { cost:2 },
-    "Гарпун": { cost:2 },
-    "Кинетический ускоритель": { cost:6 },
-    "Магнитная глушилка": { cost:2 },
-    "Миномет": { cost:4 },
-    "Ракеты": { cost:5 },
-    "Металлоломомет": { cost:4 },
-    "Металлоломобол": { cost:2 },
-    "Шипы": { cost:1 },
-    "Клей": { cost:1 },
-    "Мины": { cost:1 },
-    "Напалм": { cost:1 },
-    "Машинное Масло": { cost:2 },
-    "Радиоуправляемые бомбы": { cost:3 },
-    "Переносная Турель": { cost:3 },
-    "Дымовая бомба": { cost:1 }
+    "Пулемет": { cost:2, slots:1 },
+    "Тяжелый Пулемет": { cost:3, slots:1 },
+    "Гатлинг": { cost:5, slots:1 },
+    "125мм Пушка": { cost:6, slots:3 },
+    "Молниевая Пушка": { cost:6, slots:2 },
+    "Гранатомет": { cost:4, slots:2 },
+    "BFG": { cost:1, slots:3 },
+    "Лазер": { cost:5, slots:1 },
+    "Луч Смерти": { cost:3, slots:1 },
+    "Огнемет": { cost:4, slots:2 },
+    "Манипулятор": { cost:6, slots:1 },
+    "Гравипушка": { cost:2, slots:1 },
+    "Гарпун": { cost:2, slots:1 },
+    "Кинетический ускоритель": { cost:6, slots:2 },
+    "Магнитная глушилка": { cost:2, slots:0 },
+    "Миномет": { cost:4, slots:1 },
+    "Ракеты": { cost:5, slots:2 },
+    "Металлоломомет": { cost:4, slots:4 },
+    "Металлоломобол": { cost:2, slots:3 },
+    "Шипы": { cost:1, slots:1 },
+    "Клей": { cost:1, slots:1 },
+    "Мины": { cost:1, slots:1 },
+    "Напалм": { cost:1, slots:1 },
+    "Машинное Масло": { cost:2, slots:0 },
+    "Радиоуправляемые бомбы": { cost:3, slots:0 },
+    "Переносная Турель": { cost:3, slots:0 },
+    "Дымовая бомба": { cost:1, slots:0 }
 };
 
 const upgradesDB = {
-    "Дополнительные бронелисты": { cost:4 },
-    "Ядерный двигатель": { cost:5 },
-    "Экспериментальный Телепорт": { cost:7 },
-    "Взрывающийся таран": { cost:3 },
-    "Дополнительный член экипажа": { cost:4 },
-    "Самодельная катапульта": { cost:2 },
-    "Азотный Ускоритель": { cost:6 },
-    "Таран": { cost:4 },
-    "Каркас Безопасности": { cost:4 },
-    "Гусеницы": { cost:4 },
-    "Турель": { cost:0 }
+    "Дополнительные бронелисты": { cost:4, slots:1 },
+    "Ядерный двигатель": { cost:5, slots:0 },
+    "Экспериментальный Телепорт": { cost:7, slots:0 },
+    "Взрывающийся таран": { cost:3, slots:0 },
+    "Дополнительный член экипажа": { cost:4, slots:0 },
+    "Самодельная катапульта": { cost:2, slots:1 },
+    "Азотный Ускоритель": { cost:6, slots:0 },
+    "Таран": { cost:4, slots:1 },
+    "Каркас Безопасности": { cost:4, slots:1 },
+    "Гусеницы": { cost:4, slots:1 },
+    "Турель": { cost:0, slots:0 }
 };
 
 // ===== УТИЛИТЫ =====
@@ -137,9 +138,7 @@ function getMaxWeaponCost(){
     let max = 0;
     document.querySelectorAll("#weapons input").forEach(i=>{
         const key=findInDB(i.value, weaponsDB);
-        if(key){
-            max = Math.max(max, weaponsDB[key].cost);
-        }
+        if(key) max = Math.max(max, weaponsDB[key].cost);
     });
     return max;
 }
@@ -158,13 +157,33 @@ function updateTurretCost(){
     const maxWeapon = getMaxWeaponCost();
     const list=document.getElementById("upgradeList");
     list.innerHTML="";
-
     Object.keys(upgradesDB).forEach(k=>{
         let o=document.createElement("option");
         let cost = (k==="Турель") ? maxWeapon*2 : upgradesDB[k].cost;
         o.value = `${k} [${cost}]`;
         list.appendChild(o);
     });
+}
+
+function calculateSlots(){
+    let used = 0;
+    let max = 0;
+
+    const vKey=findInDB(vehicleInput.value, vehicles);
+    if(vKey) max = vehicles[vKey].slots;
+
+    document.querySelectorAll("#weapons input").forEach(i=>{
+        const key=findInDB(i.value, weaponsDB);
+        if(key) used += weaponsDB[key].slots || 0;
+    });
+
+    document.querySelectorAll("#upgrades input").forEach(i=>{
+        const key=findInDB(i.value, upgradesDB);
+        if(key) used += upgradesDB[key].slots || 0;
+    });
+
+    document.getElementById("slots").innerText = `${used}/${max}`;
+    return {used, max};
 }
 
 // ===== ПОДСЧЁТ =====
@@ -194,6 +213,7 @@ function calculateCurrent(){
     });
 
     document.getElementById("currentCost").innerText = cost;
+    calculateSlots();
     updateTurretCost();
 }
 
@@ -226,25 +246,31 @@ function addUnit(){
     let cost=0;
     let text="";
 
+    const slotsData = calculateSlots();
+    if(slotsData.used > slotsData.max){
+        alert("Слишком много слотов занято");
+        return;
+    }
+
     const vKey=findInDB(vehicleInput.value, vehicles);
     if(!vKey) return alert("Нет машины");
 
     cost+=vehicles[vKey].cost;
     text+=`${vKey} [${vehicles[vKey].cost}]\n`;
-	let crewAdded=false;
 
-document.querySelectorAll("#crewWeapons input").forEach(i=>{
-    const key=findInDB(i.value, crewWeaponsDB);
-    if(key){
-        crewAdded=true;
-        cost+=crewWeaponsDB[key].cost;
-        text+=`Экипаж: ${key} [${crewWeaponsDB[key].cost}]\n`;
+    let crewAdded=false;
+    document.querySelectorAll("#crewWeapons input").forEach(i=>{
+        const key=findInDB(i.value, crewWeaponsDB);
+        if(key){
+            crewAdded=true;
+            cost+=crewWeaponsDB[key].cost;
+            text+=`Экипаж: ${key} [${crewWeaponsDB[key].cost}]\n`;
+        }
+    });
+
+    if(!crewAdded){
+        text+=`Экипаж: Пистолет [0]\n`;
     }
-});
-
-if(!crewAdded){
-    text+=`Экипаж: Пистолет [0]\n`;
-}
 
     document.querySelectorAll("#weapons input").forEach(i=>{
         const key=findInDB(i.value, weaponsDB);

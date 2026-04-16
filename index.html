@@ -9,6 +9,7 @@ input, select { margin:5px; padding:5px; background:#2d2d2d; color:#fff; border:
 button { margin:5px; padding:5px 10px; cursor:pointer; background:#3a6ea5; border:none; color:#fff; border-radius:4px; }
 button:hover { background:#2c4e7a; }
 .unit { border:1px solid #555; padding:10px; margin-top:10px; background:#2a2a2a; border-radius:5px; }
+.roster-header { border-bottom: 1px solid #555; padding: 5px; margin-bottom: 10px; font-weight: bold; }
 .block { margin-bottom:5px; }
 .sponsor-block { background:#2a2a2a; padding:10px; border-radius:5px; margin-bottom:15px; }
 .rules { font-size:0.9em; color:#ccc; margin-left:5px; }
@@ -484,7 +485,11 @@ function addUnit(){
         div.remove();
     };
     div.appendChild(btn);
-    roster.appendChild(div);
+    
+    // Добавляем юнит в ростер (заголовок уже есть, добавляем после него)
+    const rosterDiv = document.getElementById("roster");
+    rosterDiv.appendChild(div);
+    
     total+=cost;
     document.getElementById("total").innerText=total;
     clearAll();
@@ -493,12 +498,13 @@ function addUnit(){
 
 function copyRoster(){
     let text = "";
-    document.querySelectorAll(".unit").forEach(u=>{
-        text += u.innerText.replace("Удалить","").trim() + "\n\n";
+    // Собираем всё содержимое ростера (включая заголовок)
+    document.querySelectorAll("#roster > div").forEach(div => {
+        let divText = div.innerText.replace("Удалить","").trim();
+        if (divText) text += divText + "\n\n";
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
-    alert("Ростер скопирован");
 }
 
 function clearAll(){
@@ -513,6 +519,19 @@ function onSponsorChange(){
     currentSponsor = document.getElementById("sponsorSelect").value;
     const rulesDiv = document.getElementById("sponsorRules");
     rulesDiv.innerText = sponsorsDB[currentSponsor]?.rules || "";
+    
+    // Очищаем ростер и сбрасываем общую стоимость
+    total = 0;
+    document.getElementById("total").innerText = total;
+    const rosterDiv = document.getElementById("roster");
+    rosterDiv.innerHTML = "";
+    
+    // Добавляем заголовок с текущим спонсором
+    let headerDiv = document.createElement("div");
+    headerDiv.className = "roster-header";
+    headerDiv.innerText = `Спонсор: ${currentSponsor}`;
+    rosterDiv.appendChild(headerDiv);
+    
     updateAllLists();
     clearAll();
     calculateCurrent();

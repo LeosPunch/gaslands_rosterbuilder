@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Vehicle Builder - Sponsors Edition</title>
+<title>Gaslands Roster Builder</title>
 <style>
 body { font-family: Arial; background:#1e1e1e; color:#fff; padding:20px; }
 input, select { margin:5px; padding:5px; background:#2d2d2d; color:#fff; border:1px solid #555; }
@@ -651,7 +651,7 @@ function editUnit(div, unitData, cost) {
 
 function copyRoster(){
     const units = document.querySelectorAll(".unit");
-    if (units.length === 0) { alert("Ростер пуст! Нечего копировать."); return; }
+    if (units.length === 0) { alert("Пустой ростер."); return; }
     let text = "";
     document.querySelectorAll("#roster > div").forEach(div => {
         let divText = div.innerText.replace("Удалить", "").replace("Редактировать", "").trim();
@@ -659,7 +659,6 @@ function copyRoster(){
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
-    alert("Ростер скопирован");
 }
 
 function clearAll(){

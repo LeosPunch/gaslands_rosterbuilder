@@ -441,8 +441,13 @@ function addUnit(){
 
     cost+=vehicles[vKey].cost;
     let stats = computeVehicleStats(vKey, upgradesSelected);
-    text+=`${vKey} [${vehicles[vKey].cost}] (Прочность: ${stats.hull}, Управляемость ${stats.handle}, Макс. передача ${stats.maxSpeed}, Экипаж ${stats.crew})\n`;
-
+    let rulesText = vehicles[vKey].rules;
+    let vehicleInfo = `Прочность: ${stats.hull}, Управляемость ${stats.handle}, Макс. передача ${stats.maxSpeed}, Экипаж ${stats.crew}`;
+    if (rulesText && rulesText.trim() !== "") {
+        vehicleInfo += `, Правила: ${rulesText}`;
+    }
+    text+=`${vKey} [${vehicles[vKey].cost}] (${vehicleInfo})\n`;
+	
     let crewAdded=false;
     let crewWeaponsKeys = [];
     document.querySelectorAll("#crewWeapons input").forEach(i=>{

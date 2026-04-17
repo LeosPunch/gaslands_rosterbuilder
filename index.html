@@ -12,7 +12,7 @@ button:hover { background:#2c4e7a; }
 .block { margin-bottom:5px; }
 .sponsor-block { padding:10px; border-radius:5px; margin-bottom:15px; }
 .rules { font-size:0.9em; color:#ccc; margin-left:5px; }
-.roster-header { padding: 5px; margin-bottom: 10px; font-weight: bold; }
+.roster-header { border-bottom: 1px solid #555; padding: 5px; margin-bottom: 10px; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -20,9 +20,10 @@ button:hover { background:#2c4e7a; }
 <h1>Gaslands Roster Builder</h1>
 
 <div class="sponsor-block">
-    <label for="sponsorSelect"><strong>Спонсор команды:</strong></label>
+    <label for="sponsorSelect"><strong>Спонсор:</strong></label>
     <select id="sponsorSelect" onchange="onSponsorChange()"></select>
     <div id="sponsorRules" class="rules"></div>
+    <div id="sponsorAbilities" class="rules" style="margin-top: 5px;"></div>
 </div>
 
 <h3>Машина</h3>
@@ -41,6 +42,10 @@ button:hover { background:#2c4e7a; }
 <div id="upgrades"></div>
 <button onclick="addUpgrade()">добавить</button>
 
+<h3>Навыки</h3>
+<div id="skills"></div>
+<button onclick="addSkill()">добавить</button>
+
 <h2>Стоимость машинки: <span id="currentCost">0</span></h2>
 <h2>Занятые слоты: <span id="slots">0/0</span></h2>
 
@@ -56,6 +61,7 @@ button:hover { background:#2c4e7a; }
 <datalist id="weaponList"></datalist>
 <datalist id="crewList"></datalist>
 <datalist id="upgradeList"></datalist>
+<datalist id="skillList"></datalist>
 
 <script>
 // ===== БАЗЫ =====
@@ -139,28 +145,103 @@ const upgradesDB = {
     "Турель": { cost:0, slots:0, rules:"Круговой обстрел." }
 };
 
-const sponsorsDB = {
-    "Без Спонсора": { ability:"", rules:"" },
-    "Резерфорд": { ability:"Хулиган+Военный", rules:"Военная Техника. Много Патронов. Право Силы. Теле-мясорубка." },
-    "Миядзаки": { ability:"Храбрость+Точность", rules:"Виртуоз. Элегантность. Артистизм." },
-    "Мишкин": { ability:"Военный+Технологии", rules:"Электроник-суперсоник. Генератор. Новые Игрушки." },
-    "Идрис": { ability:"Точность+Скорость", rules:"Азотная Зависимость. Демон Скорости. Культ Скорости. Поцелуй Мой Асфальт" },
-    "Слим": { ability:"Тюнинг+Дерзость", rules:"Пинбол. Шипастый Кулак. Живи быстро." },
-    "Уорден": { ability:"Агрессия+Хулиган", rules:"Стальной Гроб. Фейерверк." },
-    "Скарлетт": { ability:"Агрессия+Тюнинг", rules:"Каюты. На Абордаж. Поднять Паруса. На Борт или За Борт." },
-    "Дорожный Патруль": { ability:"Скорость+Преследование", rules:"Погоня. Преследую Нарушителя. Сирена. Стальное Правосудие. Громкая Сирена." },
-    "Верн": { ability:"Технологии+Сборка", rules:"Ультралёгкая Броня. Роскошный Багажник. Могильная плита. Вечеринка." },
-    "Максин": { ability:"Тюнинг+Преследование", rules:"Головокружение. Максимальный Дрифт. Великолепно!" },
-    "Орден Инферно": { ability:"Ужас+Скорость", rules:"Огонь Идёт Со Мной. Горящий Человек. Культ Пламени." },
-    "Бэверли, Дьявол на Шоссе": { ability:"Ужас+Сборка", rules:"Дорога на Кладбище. Призрачный Гонщик. Якорь Души. На Перекрёстке Миров. Непоколебимый. Урожай Душ." },
-    "Гонщики-Самогонщики Расти": { ability:"Дерзость+Сборка", rules:"Пьяная Езда. Алкокураж. Еду Прямо, Как Получается. Перебрал. Прицепы. Буксировка." }
+const skillsDB = {
+    "С Двух Рук": { cost:2, ability:"Агрессия" },
+    "Стрелки на Крыше": { cost:2, ability:"Агрессия" },
+    "Молот": { cost:4, ability:"Агрессия" },
+    "Чёртов Псих": { cost:5, ability:"Агрессия" },
+    "Мастер Подстав": { cost:5, ability:"Агрессия" },
+    "Трактор Убийца": { cost:5, ability:"Агрессия" },
+    "Пороховая Бочка": { cost:1, ability:"Хулиган" },
+    "Любимец Толпы": { cost:1, ability:"Хулиган" },
+    "Воин Дороги": { cost:2, ability:"Хулиган" },
+    "Прикрой Меня": { cost:2, ability:"Хулиган" },
+    "Безумец": { cost:3, ability:"Хулиган" },
+    "Время Пострелять": { cost:3, ability:"Хулиган" },
+    "Балласт": { cost:2, ability:"Сборка" },
+    "Сальто": { cost:2, ability:"Сборка" },
+    "Крутой": { cost:4, ability:"Сборка" },
+    "Осколки": { cost:5, ability:"Сборка" },
+    "Разрушитель": { cost:7, ability:"Сборка" },
+    "Не Чувствую Боли": { cost:8, ability:"Сборка" },
+    "Повелитель Хрома": { cost:2, ability:"Храбрость" },
+    "Скользкий": { cost:3, ability:"Храбрость" },
+    "Мастер Ручника": { cost:3, ability:"Храбрость" },
+    "Хрен Попадёшь": { cost:5, ability:"Храбрость" },
+    "Управляемый Занос": { cost:5, ability:"Храбрость" },
+    "Каскадёр": { cost:7, ability:"Храбрость" },
+    "Очистительный Огонь": { cost:1, ability:"Ужас" },
+    "Видения": { cost:1, ability:"Ужас" },
+    "Общность Проклятых": { cost:1, ability:"Ужас" },
+    "Дорога в Ад": { cost:2, ability:"Ужас" },
+    "Эффектное Появление": { cost:3, ability:"Ужас" },
+    "Ангел Смерти": { cost:4, ability:"Ужас" },
+    "Снайпер": { cost:2, ability:"Военный" },
+    "Заряжающий": { cost:2, ability:"Военный" },
+    "Куча Патронов": { cost:2, ability:"Военный" },
+    "Беглый Огонь": { cost:2, ability:"Военный" },
+    "Точный Выстрел": { cost:4, ability:"Военный" },
+    "Ответный Огонь": { cost:5, ability:"Военный" },
+    "Железные Нервы": { cost:2, ability:"Точность" },
+    "Момент Славы": { cost:2, ability:"Точность" },
+    "Перегазовка": { cost:2, ability:"Точность" },
+    "Эксперт": { cost:3, ability:"Точность" },
+    "Отличная Езда": { cost:3, ability:"Точность" },
+    "Мастер Вождения": { cost:5, ability:"Точность" },
+    "На Хвосте": { cost:2, ability:"Преследование" },
+    "Злорадство": { cost:2, ability:"Преследование" },
+    "Насмешка": { cost:2, ability:"Преследование" },
+    "С Дороги!": { cost:2, ability:"Преследование" },
+    "PIT-Манёвр": { cost:4, ability:"Преследование" },
+    "Суровый Взгляд": { cost:5, ability:"Преследование" },
+    "Агрессивная Езда": { cost:1, ability:"Дерзость" },
+    "Дикий Баран": { cost:2, ability:"Дерзость" },
+    "Любой Ценой": { cost:2, ability:"Дерзость" },
+    "Вхожу Без Стука": { cost:4, ability:"Дерзость" },
+    "А у Меня Больше": { cost:4, ability:"Дерзость" },
+    "Берсерк": { cost:5, ability:"Дерзость" },
+    "Горячий Старт": { cost:1, ability:"Скорость" },
+    "Ускользание": { cost:2, ability:"Скорость" },
+    "Перегрузка": { cost:2, ability:"Скорость" },
+    "Инерция": { cost:3, ability:"Скорость" },
+    "Остановка Времени!": { cost:3, ability:"Скорость" },
+    "Кирдык Коробке": { cost:5, ability:"Скорость" },
+    "Реактивные Ускорители": { cost:1, ability:"Технологии" },
+    "Повезло": { cost:1, ability:"Технологии" },
+    "Гироскоп": { cost:1, ability:"Технологии" },
+    "Спутниковый Навигатор": { cost:2, ability:"Технологии" },
+    "Механик": { cost:3, ability:"Технологии" },
+    "Эврика!": { cost:4, ability:"Технологии" },
+    "Жестянка": { cost:2, ability:"Тюнинг" },
+    "Задний Привод": { cost:2, ability:"Тюнинг" },
+    "Мягкое Переключение": { cost:3, ability:"Тюнинг" },
+    "Крутящий Момент": { cost:3, ability:"Тюнинг" },
+    "Вр-р-у-у-м": { cost:6, ability:"Тюнинг" },
+    "Слалом": { cost:6, ability:"Тюнинг" }
 };
 
-// Специфичные предметы для Мишкина (эксклюзивные)
+const sponsorsDB = {
+    "Без Спонсора": { ability1:"", ability2:"", rules:"" },
+    "Резерфорд": { ability1:"Хулиган", ability2:"Военный", rules:"Военная Техника. Много Патронов. Право Силы. Теле-мясорубка." },
+    "Миядзаки": { ability1:"Храбрость", ability2:"Точность", rules:"Виртуоз. Элегантность. Артистизм." },
+    "Мишкин": { ability1:"Военный", ability2:"Технологии", rules:"Электроник-суперсоник. Генератор. Новые Игрушки." },
+    "Идрис": { ability1:"Точность", ability2:"Скорость", rules:"Азотная Зависимость. Демон Скорости. Культ Скорости. Поцелуй Мой Асфальт" },
+    "Слим": { ability1:"Тюнинг", ability2:"Дерзость", rules:"Пинбол. Шипастый Кулак. Живи быстро." },
+    "Уорден": { ability1:"Агрессия", ability2:"Хулиган", rules:"Стальной Гроб. Фейерверк." },
+    "Скарлетт": { ability1:"Агрессия", ability2:"Тюнинг", rules:"Каюты. На Абордаж. Поднять Паруса. На Борт или За Борт." },
+    "Дорожный Патруль": { ability1:"Скорость", ability2:"Преследование", rules:"Погоня. Преследую Нарушителя. Сирена. Стальное Правосудие. Громкая Сирена." },
+    "Верн": { ability1:"Технологии", ability2:"Сборка", rules:"Ультралёгкая Броня. Роскошный Багажник. Могильная плита. Вечеринка." },
+    "Максин": { ability1:"Тюнинг", ability2:"Преследование", rules:"Головокружение. Максимальный Дрифт. Великолепно!" },
+    "Орден Инферно": { ability1:"Ужас", ability2:"Скорость", rules:"Огонь Идёт Со Мной. Горящий Человек. Культ Пламени." },
+    "Бэверли, Дьявол на Шоссе": { ability1:"Ужас", ability2:"Сборка", rules:"Дорога на Кладбище. Призрачный Гонщик. Якорь Души. На Перекрёстке Миров. Непоколебимый. Урожай Душ." },
+    "Гонщики-Самогонщики Расти": { ability1:"Дерзость", ability2:"Сборка", rules:"Пьяная Езда. Алкокураж. Еду Прямо, Как Получается. Перебрал. Прицепы. Буксировка." }
+};
+
+// Специфичные предметы для Мишкина
 const mishkinWeapons = ["Молниевая Пушка", "Гравипушка", "Кинетический ускоритель", "Магнитная глушилка", "Трампер"];
 const mishkinUpgrades = ["Ядерный двигатель", "Экспериментальный Телепорт"];
 
-// Дополнительные апгрейды (добавляются спонсорами)
+// Дополнительные апгрейды
 const extraUpgrades = {
     "Громкая Сирена": { cost:2, slots:0, rules:"Особые Правила." },
     "Ультралёгкая Броня": { cost:6, slots:0, hull:2 },
@@ -201,17 +282,14 @@ function formatAttack(attack) {
 
 function formatWeaponText(weapon, key, cost) {
     let parts = [];
-    let rangeVal = weapon.range;
-    if (rangeVal !== undefined) {
-        let rangeStr = formatRange(rangeVal);
+    if (weapon.range !== undefined) {
+        let rangeStr = formatRange(weapon.range);
         if (rangeStr) parts.push(`Дальность: ${rangeStr}`);
     }
-    let attackVal = weapon.attack;
-    let attackStr = formatAttack(attackVal);
+    let attackStr = formatAttack(weapon.attack);
     if (attackStr) parts.push(`Атака: ${attackStr}`);
     if (weapon.ammo !== undefined) {
-        let ammoCount = getAmmo(weapon, weapon.ammo);
-        parts.push(`Боеприпасы: ${ammoCount}`);
+        parts.push(`Боеприпасы: ${getAmmo(weapon, weapon.ammo)}`);
     }
     if (weapon.rules && weapon.rules.trim() !== "") {
         parts.push(weapon.rules);
@@ -221,9 +299,7 @@ function formatWeaponText(weapon, key, cost) {
 }
 
 function getUpgradeCost(upgradeKey) {
-    if (upgradeKey === "Турель") {
-        return getMaxWeaponCost() * 2;
-    }
+    if (upgradeKey === "Турель") return getMaxWeaponCost() * 2;
     if (currentSponsor === "Идрис" && upgradeKey === "Азотный Ускоритель") return 3;
     if (currentSponsor === "Скарлетт" && upgradeKey === "Дополнительный член экипажа") return 2;
     if (extraUpgrades[upgradeKey]) return extraUpgrades[upgradeKey].cost;
@@ -236,11 +312,10 @@ function getUpgradeSlots(upgradeKey) {
     return upgradesDB[upgradeKey]?.slots || 0;
 }
 
-// Фильтр машин
+// Фильтры
 function isVehicleAllowed(vehicleKey, vehicleData) {
     if (vehicleKey === "Танк" || vehicleKey === "Вертолет") {
-        if (currentSponsor === "Резерфорд") return true;
-        else return false;
+        return currentSponsor === "Резерфорд";
     }
     if (currentSponsor === "Резерфорд") {
         if (vehicleData.mass === 1) return false;
@@ -257,13 +332,23 @@ function isWeaponAllowed(weaponKey) {
 }
 
 function isUpgradeAllowed(upgradeKey) {
-    if (mishkinUpgrades.includes(upgradeKey)) {
-        return currentSponsor === "Мишкин";
-    }
+    if (mishkinUpgrades.includes(upgradeKey)) return currentSponsor === "Мишкин";
     if (upgradeKey === "Громкая Сирена" && currentSponsor !== "Дорожный Патруль") return false;
     if (upgradeKey === "Ультралёгкая Броня" && currentSponsor !== "Верн") return false;
     if (upgradeKey.startsWith("Прицеп") && currentSponsor !== "Гонщики-Самогонщики Расти") return false;
     return true;
+}
+
+function isSkillAllowed(skillKey) {
+    if (currentSponsor === "Без Спонсора") return false;
+    const ability = skillsDB[skillKey].ability;
+    const sponsor = sponsorsDB[currentSponsor];
+    return (sponsor.ability1 === ability || sponsor.ability2 === ability);
+}
+
+function getSkillListFiltered() {
+    if (currentSponsor === "Без Спонсора") return [];
+    return Object.keys(skillsDB).filter(isSkillAllowed);
 }
 
 function getVehicleListFiltered() {
@@ -309,6 +394,14 @@ function updateAllLists() {
         crewList.appendChild(o);
     });
 
+    const skillList = document.getElementById("skillList");
+    skillList.innerHTML = "";
+    getSkillListFiltered().forEach(k => {
+        let o = document.createElement("option");
+        o.value = `${k} [${skillsDB[k].cost}]`;
+        skillList.appendChild(o);
+    });
+
     updateTurretCost();
 }
 
@@ -349,6 +442,7 @@ function calculateSlots(){
         if(key && isUpgradeAllowed(key)) used += getUpgradeSlots(key);
         else if (extraUpgrades[key] && isUpgradeAllowed(key)) used += extraUpgrades[key].slots;
     });
+    // навыки не занимают слотов
     document.getElementById("slots").innerText = `${used}/${max}`;
     return {used, max};
 }
@@ -370,6 +464,10 @@ function calculateCurrent(){
         const key=findInDB(i.value, upgradesDB);
         if(key && isUpgradeAllowed(key)) cost += getUpgradeCost(key);
         else if (extraUpgrades[key] && isUpgradeAllowed(key)) cost += extraUpgrades[key].cost;
+    });
+    document.querySelectorAll("#skills input").forEach(i=>{
+        const key=findInDB(i.value, skillsDB);
+        if(key && isSkillAllowed(key)) cost += skillsDB[key].cost;
     });
     document.getElementById("currentCost").innerText = cost;
     calculateSlots();
@@ -394,6 +492,12 @@ function addUpgrade(){
     d.innerHTML=`<input list="upgradeList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
     upgrades.appendChild(d);
 }
+function addSkill(){
+    let d=document.createElement("div");
+    d.className="block";
+    d.innerHTML=`<input list="skillList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
+    skills.appendChild(d);
+}
 
 function computeVehicleStats(vehicleKey, upgradeKeys) {
     let base = vehicles[vehicleKey];
@@ -416,9 +520,9 @@ function addUnit(){
     let text="";
     const slotsData = calculateSlots();
     const vKey=findInDB(vehicleInput.value, vehicles);
-    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины.");
+    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины или она запрещена спонсором");
     if(slotsData.used > slotsData.max){
-        alert("Слишком много слотов занято.");
+        alert("Слишком много слотов занято");
         return;
     }
     const vehicleMass = vehicles[vKey].mass;
@@ -443,11 +547,9 @@ function addUnit(){
     let stats = computeVehicleStats(vKey, upgradesSelected);
     let rulesText = vehicles[vKey].rules;
     let vehicleInfo = `Прочность: ${stats.hull}, Управляемость ${stats.handle}, Макс. передача ${stats.maxSpeed}, Экипаж ${stats.crew}`;
-    if (rulesText && rulesText.trim() !== "") {
-        vehicleInfo += `, Правила: ${rulesText}`;
-    }
+    if (rulesText && rulesText.trim() !== "") vehicleInfo += `, Правила: ${rulesText}`;
     text+=`${vKey} [${vehicles[vKey].cost}] (${vehicleInfo})\n`;
-	
+
     let crewAdded=false;
     let crewWeaponsKeys = [];
     document.querySelectorAll("#crewWeapons input").forEach(i=>{
@@ -479,14 +581,22 @@ function addUnit(){
     upgradesSelected.forEach(key=>{
         let uCost = getUpgradeCost(key);
         cost+=uCost;
-        let rulesText = "";
-        if (upgradesDB[key] && upgradesDB[key].rules) rulesText = upgradesDB[key].rules;
-        else if (extraUpgrades[key] && extraUpgrades[key].rules) rulesText = extraUpgrades[key].rules;
-        else if (key === "Турель") rulesText = "Круговой обстрел.";
-        if (rulesText) {
-            text+=`Апгрейд: ${key} [${uCost}] (${rulesText})\n`;
-        } else {
-            text+=`Апгрейд: ${key} [${uCost}]\n`;
+        let rulesTextUp = "";
+        if (upgradesDB[key] && upgradesDB[key].rules) rulesTextUp = upgradesDB[key].rules;
+        else if (extraUpgrades[key] && extraUpgrades[key].rules) rulesTextUp = extraUpgrades[key].rules;
+        else if (key === "Турель") rulesTextUp = "Круговой обстрел.";
+        if (rulesTextUp) text+=`Апгрейд: ${key} [${uCost}] (${rulesTextUp})\n`;
+        else text+=`Апгрейд: ${key} [${uCost}]\n`;
+    });
+
+    let skillsKeys = [];
+    document.querySelectorAll("#skills input").forEach(i=>{
+        const key=findInDB(i.value, skillsDB);
+        if(key && isSkillAllowed(key)){
+            let sk = skillsDB[key];
+            cost+=sk.cost;
+            text+=`Навык: ${key} [${sk.cost}]\n`;
+            skillsKeys.push(key);
         }
     });
 
@@ -494,22 +604,19 @@ function addUnit(){
     div.className="unit";
     div.innerText=text;
     
-    // Сохраняем данные юнита
     const unitData = {
         vehicleKey: vKey,
         crewWeapons: crewWeaponsKeys,
         weapons: weaponsKeys,
-        upgrades: upgradesKeys
+        upgrades: upgradesKeys,
+        skills: skillsKeys
     };
     div.dataset.unit = JSON.stringify(unitData);
     
     let btnEdit = document.createElement("button");
     btnEdit.innerText = "Редактировать";
     btnEdit.style.marginRight = "5px";
-    btnEdit.onclick = function() {
-        editUnit(div, unitData, cost);
-    };
-    
+    btnEdit.onclick = function() { editUnit(div, unitData, cost); };
     let btnDel = document.createElement("button");
     btnDel.innerText = "Удалить";
     btnDel.onclick = function(){
@@ -517,7 +624,6 @@ function addUnit(){
         document.getElementById("total").innerText=total;
         div.remove();
     };
-    
     div.appendChild(btnEdit);
     div.appendChild(btnDel);
     
@@ -531,69 +637,37 @@ function addUnit(){
 }
 
 function editUnit(div, unitData, cost) {
-    // Удаляем юнит из ростера и вычитаем стоимость
     total -= cost;
     document.getElementById("total").innerText = total;
     div.remove();
-    
-    // Очищаем форму
     clearAll();
-    
-    // Заполняем поля машины
     vehicleInput.value = `${unitData.vehicleKey} [${vehicles[unitData.vehicleKey].cost}]`;
-    
-    // Добавляем оружие экипажа
-    unitData.crewWeapons.forEach(key => {
-        addCrewWeapon();
-        const inputs = document.querySelectorAll("#crewWeapons input");
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.value = `${key} [${crewWeaponsDB[key].cost}]`;
-    });
-    
-    // Добавляем оружие
-    unitData.weapons.forEach(key => {
-        addWeapon();
-        const inputs = document.querySelectorAll("#weapons input");
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.value = `${key} [${weaponsDB[key].cost}]`;
-    });
-    
-    // Добавляем апгрейды
-    unitData.upgrades.forEach(key => {
-        addUpgrade();
-        const inputs = document.querySelectorAll("#upgrades input");
-        const lastInput = inputs[inputs.length - 1];
-        let upgradeCost = getUpgradeCost(key);
-        lastInput.value = `${key} [${upgradeCost}]`;
-    });
-    
+    unitData.crewWeapons.forEach(key => { addCrewWeapon(); document.querySelectorAll("#crewWeapons input").slice(-1)[0].value = `${key} [${crewWeaponsDB[key].cost}]`; });
+    unitData.weapons.forEach(key => { addWeapon(); document.querySelectorAll("#weapons input").slice(-1)[0].value = `${key} [${weaponsDB[key].cost}]`; });
+    unitData.upgrades.forEach(key => { addUpgrade(); let uCost = getUpgradeCost(key); document.querySelectorAll("#upgrades input").slice(-1)[0].value = `${key} [${uCost}]`; });
+    unitData.skills.forEach(key => { addSkill(); document.querySelectorAll("#skills input").slice(-1)[0].value = `${key} [${skillsDB[key].cost}]`; });
     calculateCurrent();
 }
 
 function copyRoster(){
-    // Проверяем, есть ли в ростере что-то кроме заголовка
-    const rosterDiv = document.getElementById("roster");
-    const units = rosterDiv.querySelectorAll(".unit");
-    if (units.length === 0) {
-        alert("Пустой ростер.");
-        return;
-    }
-    
+    const units = document.querySelectorAll(".unit");
+    if (units.length === 0) { alert("Ростер пуст! Нечего копировать."); return; }
     let text = "";
-    // Собираем всё содержимое ростера (включая заголовок)
     document.querySelectorAll("#roster > div").forEach(div => {
         let divText = div.innerText.replace("Удалить", "").replace("Редактировать", "").trim();
         if (divText) text += divText + "\n\n";
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
+    alert("Ростер скопирован");
 }
 
 function clearAll(){
-    document.querySelectorAll("#crewWeapons input, #weapons input, #upgrades input").forEach(i=>i.value="");
+    document.querySelectorAll("#crewWeapons input, #weapons input, #upgrades input, #skills input").forEach(i=>i.value="");
     weapons.innerHTML="";
     upgrades.innerHTML="";
     crewWeapons.innerHTML="";
+    skills.innerHTML="";
     vehicleInput.value = "";
 }
 
@@ -603,17 +677,23 @@ function onSponsorChange(){
     const sponsorRules = sponsorsDB[currentSponsor]?.rules || "";
     rulesDiv.innerText = sponsorRules;
     
+    // Отображение доступных способностей (навыков)
+    const abilitiesDiv = document.getElementById("sponsorAbilities");
+    if (currentSponsor === "Без Спонсора") {
+        abilitiesDiv.innerText = "";
+    } else {
+        const sponsor = sponsorsDB[currentSponsor];
+        abilitiesDiv.innerText = `Навыки: ${sponsor.ability1} и ${sponsor.ability2}`;
+    }
+    
     // Очищаем ростер и сбрасываем общую стоимость
     total = 0;
     document.getElementById("total").innerText = total;
     const rosterDiv = document.getElementById("roster");
     rosterDiv.innerHTML = "";
     
-    // Добавляем заголовок с текущим спонсором и его правилами (если есть)
     let headerText = `Спонсор: ${currentSponsor}`;
-    if (sponsorRules && sponsorRules.trim() !== "") {
-        headerText += ` (${sponsorRules})`;
-    }
+    if (sponsorRules && sponsorRules.trim() !== "") headerText += ` (${sponsorRules})`;
     let headerDiv = document.createElement("div");
     headerDiv.className = "roster-header";
     headerDiv.innerText = headerText;

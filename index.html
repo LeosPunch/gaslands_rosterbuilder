@@ -9,11 +9,10 @@ input, select { margin:5px; padding:5px; background:#2d2d2d; color:#fff; border:
 button { margin:5px; padding:5px 10px; cursor:pointer; background:#3a6ea5; border:none; color:#fff; border-radius:4px; }
 button:hover { background:#2c4e7a; }
 .unit { border:1px solid #555; padding:10px; margin-top:10px; background:#2a2a2a; border-radius:5px; }
-.roster-header { border-bottom: 1px solid #555; padding: 5px; margin-bottom: 10px; font-weight: bold; }
 .block { margin-bottom:5px; }
-.sponsor-block { background:#2a2a2a; padding:10px; border-radius:5px; margin-bottom:15px; }
+.sponsor-block { padding:10px; border-radius:5px; margin-bottom:15px; }
 .rules { font-size:0.9em; color:#ccc; margin-left:5px; }
-.roster-header { border-bottom: 1px solid #555; padding: 5px; margin-bottom: 10px; font-weight: bold; }
+.roster-header { padding: 5px; margin-bottom: 10px; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -32,15 +31,15 @@ button:hover { background:#2c4e7a; }
 
 <h3>Оружие экипажа</h3>
 <div id="crewWeapons"></div>
-<button onclick="addCrewWeapon()">+ экипаж</button>
+<button onclick="addCrewWeapon()">добавить</button>
 
 <h3>Оружие</h3>
 <div id="weapons"></div>
-<button onclick="addWeapon()">+ оружие</button>
+<button onclick="addWeapon()">добавить</button>
 
 <h3>Усовершенствования</h3>
 <div id="upgrades"></div>
-<button onclick="addUpgrade()">+ апгрейд</button>
+<button onclick="addUpgrade()">добавить</button>
 
 <h2>Стоимость машинки: <span id="currentCost">0</span></h2>
 <h2>Занятые слоты: <span id="slots">0/0</span></h2>
@@ -417,9 +416,9 @@ function addUnit(){
     let text="";
     const slotsData = calculateSlots();
     const vKey=findInDB(vehicleInput.value, vehicles);
-    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины или она запрещена спонсором");
+    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины.");
     if(slotsData.used > slotsData.max){
-        alert("Слишком много слотов занято");
+        alert("Слишком много слотов занято.");
         return;
     }
     const vehicleMass = vehicles[vKey].mass;
@@ -567,6 +566,14 @@ function editUnit(div, unitData, cost) {
 }
 
 function copyRoster(){
+    // Проверяем, есть ли в ростере что-то кроме заголовка
+    const rosterDiv = document.getElementById("roster");
+    const units = rosterDiv.querySelectorAll(".unit");
+    if (units.length === 0) {
+        alert("Пустой ростер.");
+        return;
+    }
+    
     let text = "";
     // Собираем всё содержимое ростера (включая заголовок)
     document.querySelectorAll("#roster > div").forEach(div => {
@@ -575,7 +582,6 @@ function copyRoster(){
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
-    alert("Ростер скопирован");
 }
 
 function clearAll(){
@@ -589,7 +595,8 @@ function clearAll(){
 function onSponsorChange(){
     currentSponsor = document.getElementById("sponsorSelect").value;
     const rulesDiv = document.getElementById("sponsorRules");
-    rulesDiv.innerText = sponsorsDB[currentSponsor]?.rules || "";
+    const sponsorRules = sponsorsDB[currentSponsor]?.rules || "";
+    rulesDiv.innerText = sponsorRules;
     
     // Очищаем ростер и сбрасываем общую стоимость
     total = 0;
@@ -597,10 +604,14 @@ function onSponsorChange(){
     const rosterDiv = document.getElementById("roster");
     rosterDiv.innerHTML = "";
     
-    // Добавляем заголовок с текущим спонсором
+    // Добавляем заголовок с текущим спонсором и его правилами (если есть)
+    let headerText = `Спонсор: ${currentSponsor}`;
+    if (sponsorRules && sponsorRules.trim() !== "") {
+        headerText += ` (${sponsorRules})`;
+    }
     let headerDiv = document.createElement("div");
     headerDiv.className = "roster-header";
-    headerDiv.innerText = `Спонсор: ${currentSponsor}`;
+    headerDiv.innerText = headerText;
     rosterDiv.appendChild(headerDiv);
     
     updateAllLists();

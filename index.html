@@ -13,6 +13,7 @@ button:hover { background:#2c4e7a; }
 .block { margin-bottom:5px; }
 .sponsor-block { background:#2a2a2a; padding:10px; border-radius:5px; margin-bottom:15px; }
 .rules { font-size:0.9em; color:#ccc; margin-left:5px; }
+.roster-header { border-bottom: 1px solid #555; padding: 5px; margin-bottom: 10px; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -423,10 +424,16 @@ function addUnit(){
     }
     const vehicleMass = vehicles[vKey].mass;
     let upgradesSelected = [];
+    let upgradesKeys = [];
     document.querySelectorAll("#upgrades input").forEach(i=>{
         const key=findInDB(i.value, upgradesDB);
-        if(key && isUpgradeAllowed(key)) upgradesSelected.push(key);
-        else if (extraUpgrades[key] && isUpgradeAllowed(key)) upgradesSelected.push(key);
+        if(key && isUpgradeAllowed(key)) {
+            upgradesSelected.push(key);
+            upgradesKeys.push(key);
+        } else if (extraUpgrades[key] && isUpgradeAllowed(key)) {
+            upgradesSelected.push(key);
+            upgradesKeys.push(key);
+        }
     });
     if (currentSponsor === "Гонщики-Самогонщики Расти") {
         if (upgradesSelected.includes("Прицеп Средний") && vehicleMass <= 1) return alert("Для Среднего прицепа нужна масса >1");
@@ -438,6 +445,7 @@ function addUnit(){
     text+=`${vKey} [${vehicles[vKey].cost}] (Прочность: ${stats.hull}, Управляемость ${stats.handle}, Макс. передача ${stats.maxSpeed}, Экипаж ${stats.crew})\n`;
 
     let crewAdded=false;
+    let crewWeaponsKeys = [];
     document.querySelectorAll("#crewWeapons input").forEach(i=>{
         const key=findInDB(i.value, crewWeaponsDB);
         if(key){
@@ -445,18 +453,22 @@ function addUnit(){
             let weap = crewWeaponsDB[key];
             cost+=weap.cost;
             text+=`Экипаж: ${formatWeaponText(weap, key, weap.cost)}\n`;
+            crewWeaponsKeys.push(key);
         }
     });
     if(!crewAdded){
         text+=`Экипаж: Пистолет [0]\n`;
+        crewWeaponsKeys.push("Пистолет");
     }
 
+    let weaponsKeys = [];
     document.querySelectorAll("#weapons input").forEach(i=>{
         const key=findInDB(i.value, weaponsDB);
         if(key && isWeaponAllowed(key)){
             let weap = weaponsDB[key];
             cost+=weap.cost;
             text+=`Оружие: ${formatWeaponText(weap, key, weap.cost)}\n`;
+            weaponsKeys.push(key);
         }
     });
 
@@ -477,16 +489,34 @@ function addUnit(){
     let div=document.createElement("div");
     div.className="unit";
     div.innerText=text;
-    let btn=document.createElement("button");
-    btn.innerText="Удалить";
-    btn.onclick=function(){
+    
+    // Сохраняем данные юнита
+    const unitData = {
+        vehicleKey: vKey,
+        crewWeapons: crewWeaponsKeys,
+        weapons: weaponsKeys,
+        upgrades: upgradesKeys
+    };
+    div.dataset.unit = JSON.stringify(unitData);
+    
+    let btnEdit = document.createElement("button");
+    btnEdit.innerText = "Редактировать";
+    btnEdit.style.marginRight = "5px";
+    btnEdit.onclick = function() {
+        editUnit(div, unitData, cost);
+    };
+    
+    let btnDel = document.createElement("button");
+    btnDel.innerText = "Удалить";
+    btnDel.onclick = function(){
         total-=cost;
         document.getElementById("total").innerText=total;
         div.remove();
     };
-    div.appendChild(btn);
     
-    // Добавляем юнит в ростер (заголовок уже есть, добавляем после него)
+    div.appendChild(btnEdit);
+    div.appendChild(btnDel);
+    
     const rosterDiv = document.getElementById("roster");
     rosterDiv.appendChild(div);
     
@@ -496,15 +526,56 @@ function addUnit(){
     calculateCurrent();
 }
 
+function editUnit(div, unitData, cost) {
+    // Удаляем юнит из ростера и вычитаем стоимость
+    total -= cost;
+    document.getElementById("total").innerText = total;
+    div.remove();
+    
+    // Очищаем форму
+    clearAll();
+    
+    // Заполняем поля машины
+    vehicleInput.value = `${unitData.vehicleKey} [${vehicles[unitData.vehicleKey].cost}]`;
+    
+    // Добавляем оружие экипажа
+    unitData.crewWeapons.forEach(key => {
+        addCrewWeapon();
+        const inputs = document.querySelectorAll("#crewWeapons input");
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.value = `${key} [${crewWeaponsDB[key].cost}]`;
+    });
+    
+    // Добавляем оружие
+    unitData.weapons.forEach(key => {
+        addWeapon();
+        const inputs = document.querySelectorAll("#weapons input");
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.value = `${key} [${weaponsDB[key].cost}]`;
+    });
+    
+    // Добавляем апгрейды
+    unitData.upgrades.forEach(key => {
+        addUpgrade();
+        const inputs = document.querySelectorAll("#upgrades input");
+        const lastInput = inputs[inputs.length - 1];
+        let upgradeCost = getUpgradeCost(key);
+        lastInput.value = `${key} [${upgradeCost}]`;
+    });
+    
+    calculateCurrent();
+}
+
 function copyRoster(){
     let text = "";
     // Собираем всё содержимое ростера (включая заголовок)
     document.querySelectorAll("#roster > div").forEach(div => {
-        let divText = div.innerText.replace("Удалить","").trim();
+        let divText = div.innerText.replace("Удалить", "").replace("Редактировать", "").trim();
         if (divText) text += divText + "\n\n";
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
+    alert("Ростер скопирован");
 }
 
 function clearAll(){

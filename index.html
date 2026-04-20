@@ -52,6 +52,7 @@ button:hover { background:#2c4e7a; }
 <br>
 <button onclick="addUnit()">Добавить в ростер</button>
 <button onclick="copyRoster()">Скопировать ростер</button>
+<button onclick="importRoster()">Импорт ростера</button>
 
 <h2>Ростер</h2>
 <div id="roster"></div>
@@ -252,6 +253,7 @@ const extraUpgrades = {
 
 // Глобальное состояние
 let currentSponsor = "Без Спонсора";
+let total = 0;
 
 // ===== УТИЛИТЫ =====
 function findInDB(input, db){
@@ -474,28 +476,61 @@ function calculateCurrent(){
     updateTurretCost();
 }
 
-function addWeapon(){
-    let d=document.createElement("div");
-    d.className="block";
-    d.innerHTML=`<input list="weaponList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
-    weapons.appendChild(d);
+// Автоудаление пустых полей
+function attachAutoClean(inputElem) {
+    inputElem.addEventListener("blur", function() {
+        if (!this.value.trim()) {
+            let parentDiv = this.parentElement;
+            if (parentDiv && parentDiv.parentElement) {
+                parentDiv.remove();
+                calculateCurrent();
+            }
+        }
+    });
 }
+
 function addCrewWeapon(){
-    let d=document.createElement("div");
-    d.className="block";
-    d.innerHTML=`<input list="crewList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
+    let d = document.createElement("div");
+    d.className = "block";
+    let inp = document.createElement("input");
+    inp.setAttribute("list", "crewList");
+    inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+    inp.setAttribute("oninput", "calculateCurrent()");
+    attachAutoClean(inp);
+    d.appendChild(inp);
     crewWeapons.appendChild(d);
 }
+function addWeapon(){
+    let d = document.createElement("div");
+    d.className = "block";
+    let inp = document.createElement("input");
+    inp.setAttribute("list", "weaponList");
+    inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+    inp.setAttribute("oninput", "calculateCurrent()");
+    attachAutoClean(inp);
+    d.appendChild(inp);
+    weapons.appendChild(d);
+}
 function addUpgrade(){
-    let d=document.createElement("div");
-    d.className="block";
-    d.innerHTML=`<input list="upgradeList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
+    let d = document.createElement("div");
+    d.className = "block";
+    let inp = document.createElement("input");
+    inp.setAttribute("list", "upgradeList");
+    inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+    inp.setAttribute("oninput", "calculateCurrent()");
+    attachAutoClean(inp);
+    d.appendChild(inp);
     upgrades.appendChild(d);
 }
 function addSkill(){
-    let d=document.createElement("div");
-    d.className="block";
-    d.innerHTML=`<input list="skillList" onfocus="this.value=''; calculateCurrent()" oninput="calculateCurrent()">`;
+    let d = document.createElement("div");
+    d.className = "block";
+    let inp = document.createElement("input");
+    inp.setAttribute("list", "skillList");
+    inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+    inp.setAttribute("oninput", "calculateCurrent()");
+    attachAutoClean(inp);
+    d.appendChild(inp);
     skills.appendChild(d);
 }
 
@@ -520,7 +555,7 @@ function addUnit(){
     let text="";
     const slotsData = calculateSlots();
     const vKey=findInDB(vehicleInput.value, vehicles);
-    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины или она запрещена спонсором");
+    if(!vKey || !isVehicleAllowed(vKey, vehicles[vKey])) return alert("Нет машины.");
     if(slotsData.used > slotsData.max){
         alert("Слишком много слотов занято");
         return;
@@ -641,11 +676,67 @@ function editUnit(div, unitData, cost) {
     document.getElementById("total").innerText = total;
     div.remove();
     clearAll();
+    
+    // Машина
     vehicleInput.value = `${unitData.vehicleKey} [${vehicles[unitData.vehicleKey].cost}]`;
-    unitData.crewWeapons.forEach(key => { addCrewWeapon(); document.querySelectorAll("#crewWeapons input").slice(-1)[0].value = `${key} [${crewWeaponsDB[key].cost}]`; });
-    unitData.weapons.forEach(key => { addWeapon(); document.querySelectorAll("#weapons input").slice(-1)[0].value = `${key} [${weaponsDB[key].cost}]`; });
-    unitData.upgrades.forEach(key => { addUpgrade(); let uCost = getUpgradeCost(key); document.querySelectorAll("#upgrades input").slice(-1)[0].value = `${key} [${uCost}]`; });
-    unitData.skills.forEach(key => { addSkill(); document.querySelectorAll("#skills input").slice(-1)[0].value = `${key} [${skillsDB[key].cost}]`; });
+    
+    // Оружие экипажа
+    unitData.crewWeapons.forEach(key => {
+        let d = document.createElement("div");
+        d.className = "block";
+        let inp = document.createElement("input");
+        inp.setAttribute("list", "crewList");
+        inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+        inp.setAttribute("oninput", "calculateCurrent()");
+        inp.value = `${key} [${crewWeaponsDB[key].cost}]`;
+        attachAutoClean(inp);
+        d.appendChild(inp);
+        crewWeapons.appendChild(d);
+    });
+    
+    // Оружие
+    unitData.weapons.forEach(key => {
+        let d = document.createElement("div");
+        d.className = "block";
+        let inp = document.createElement("input");
+        inp.setAttribute("list", "weaponList");
+        inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+        inp.setAttribute("oninput", "calculateCurrent()");
+        inp.value = `${key} [${weaponsDB[key].cost}]`;
+        attachAutoClean(inp);
+        d.appendChild(inp);
+        weapons.appendChild(d);
+    });
+    
+    // Апгрейды
+    unitData.upgrades.forEach(key => {
+        let d = document.createElement("div");
+        d.className = "block";
+        let inp = document.createElement("input");
+        inp.setAttribute("list", "upgradeList");
+        inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+        inp.setAttribute("oninput", "calculateCurrent()");
+        let uCost = getUpgradeCost(key);
+        inp.value = `${key} [${uCost}]`;
+        attachAutoClean(inp);
+        d.appendChild(inp);
+        upgrades.appendChild(d);
+    });
+    
+    // Навыки
+    unitData.skills.forEach(key => {
+        let d = document.createElement("div");
+        d.className = "block";
+        let inp = document.createElement("input");
+        inp.setAttribute("list", "skillList");
+        inp.setAttribute("onfocus", "this.value=''; calculateCurrent()");
+        inp.setAttribute("oninput", "calculateCurrent()");
+        inp.value = `${key} [${skillsDB[key].cost}]`;
+        attachAutoClean(inp);
+        d.appendChild(inp);
+        skills.appendChild(d);
+    });
+    
     calculateCurrent();
 }
 
@@ -659,6 +750,198 @@ function copyRoster(){
     });
     text += "Общая стоимость: " + total;
     navigator.clipboard.writeText(text);
+}
+
+// ===== ИМПОРТ РОСТЕРА =====
+async function importRoster() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) throw new Error();
+
+        // Парсим спонсора
+        const sponsorMatch = text.match(/^Спонсор:\s*([^\n(]+)/m);
+        if (!sponsorMatch) throw new Error();
+        let sponsorName = sponsorMatch[1].trim();
+        let foundSponsor = Object.keys(sponsorsDB).find(sp => sp.toLowerCase() === sponsorName.toLowerCase());
+        if (!foundSponsor) throw new Error();
+
+        // Меняем спонсора без лишних вопросов
+        if (foundSponsor !== currentSponsor) {
+            document.getElementById("sponsorSelect").value = foundSponsor;
+            onSponsorChange();
+        }
+
+        // Разбиваем текст на блоки машин (аналогично предыдущей версии, но без confirm)
+        const lines = text.split(/\r?\n/);
+        let unitsBlock = [];
+        let currentBlock = [];
+        for (let line of lines) {
+            if (line.startsWith("Спонсор:")) continue;
+            if (line.startsWith("Общая стоимость:")) break;
+            if (line.trim() === "") {
+                if (currentBlock.length > 0) {
+                    unitsBlock.push(currentBlock);
+                    currentBlock = [];
+                }
+                continue;
+            }
+            if (!line.startsWith("Экипаж:") && !line.startsWith("Оружие:") && !line.startsWith("Апгрейд:") && !line.startsWith("Навык:")) {
+                if (currentBlock.length > 0) {
+                    unitsBlock.push(currentBlock);
+                    currentBlock = [];
+                }
+            }
+            currentBlock.push(line);
+        }
+        if (currentBlock.length > 0) unitsBlock.push(currentBlock);
+
+        if (unitsBlock.length === 0) throw new Error();
+
+        // Очищаем ростер, но оставляем заголовок
+        total = 0;
+        document.getElementById("total").innerText = total;
+        const rosterDiv = document.getElementById("roster");
+        while (rosterDiv.children.length > 1) {
+            rosterDiv.removeChild(rosterDiv.lastChild);
+        }
+
+        // Парсим каждую машину
+        for (let block of unitsBlock) {
+            const vehicleLine = block[0];
+            const vehicleMatch = vehicleLine.match(/^([^\[]+)\s*\[(\d+)\]/);
+            if (!vehicleMatch) continue;
+            const vehicleKey = vehicleMatch[1].trim();
+            if (!vehicles[vehicleKey]) continue;
+
+            let crewWeaponsList = [];
+            let weaponsList = [];
+            let upgradesList = [];
+            let skillsList = [];
+
+            for (let i = 1; i < block.length; i++) {
+                const line = block[i];
+                if (line.startsWith("Экипаж:")) {
+                    const match = line.match(/^Экипаж:\s*([^\[]+)\s*\[(\d+)\]/);
+                    if (match && crewWeaponsDB[match[1].trim()]) crewWeaponsList.push(match[1].trim());
+                } else if (line.startsWith("Оружие:")) {
+                    const match = line.match(/^Оружие:\s*([^\[]+)\s*\[(\d+)\]/);
+                    if (match && weaponsDB[match[1].trim()] && isWeaponAllowed(match[1].trim())) weaponsList.push(match[1].trim());
+                } else if (line.startsWith("Апгрейд:")) {
+                    const match = line.match(/^Апгрейд:\s*([^\[]+)\s*\[(\d+)\]/);
+                    if (match) {
+                        let key = match[1].trim();
+                        if ((upgradesDB[key] || extraUpgrades[key]) && isUpgradeAllowed(key)) upgradesList.push(key);
+                    }
+                } else if (line.startsWith("Навык:")) {
+                    const match = line.match(/^Навык:\s*([^\[]+)\s*\[(\d+)\]/);
+                    if (match && skillsDB[match[1].trim()] && isSkillAllowed(match[1].trim())) skillsList.push(match[1].trim());
+                }
+            }
+
+            addUnitFromData(vehicleKey, crewWeaponsList, weaponsList, upgradesList, skillsList);
+        }
+
+        document.getElementById("total").innerText = total;
+    } catch (err) {
+        alert("Неудачный импорт.");
+        console.error(err);
+    }
+}
+
+// Функция для добавления юнита напрямую по данным, без формы
+function addUnitFromData(vehicleKey, crewWeaponKeys, weaponKeys, upgradeKeys, skillKeys) {
+    let cost = 0;
+    let text = "";
+    
+    // Проверка доступности машины
+    if (!isVehicleAllowed(vehicleKey, vehicles[vehicleKey])) {
+        return;
+    }
+    
+    // Апгрейды для расчёта характеристик
+    let upgradesSelected = upgradeKeys;
+    let stats = computeVehicleStats(vehicleKey, upgradesSelected);
+    let rulesText = vehicles[vehicleKey].rules;
+    let vehicleInfo = `Прочность: ${stats.hull}, Управляемость ${stats.handle}, Макс. передача ${stats.maxSpeed}, Экипаж ${stats.crew}`;
+    if (rulesText && rulesText.trim() !== "") vehicleInfo += `, Правила: ${rulesText}`;
+    text += `${vehicleKey} [${vehicles[vehicleKey].cost}] (${vehicleInfo})\n`;
+    cost += vehicles[vehicleKey].cost;
+    
+    // Оружие экипажа
+    let crewAdded = false;
+    for (let key of crewWeaponKeys) {
+        if (crewWeaponsDB[key]) {
+            crewAdded = true;
+            let weap = crewWeaponsDB[key];
+            cost += weap.cost;
+            text += `Экипаж: ${formatWeaponText(weap, key, weap.cost)}\n`;
+        }
+    }
+    if (!crewAdded) {
+        text += `Экипаж: Пистолет [0]\n`;
+        crewWeaponKeys = ["Пистолет"];
+    }
+    
+    // Оружие
+    for (let key of weaponKeys) {
+        if (weaponsDB[key] && isWeaponAllowed(key)) {
+            let weap = weaponsDB[key];
+            cost += weap.cost;
+            text += `Оружие: ${formatWeaponText(weap, key, weap.cost)}\n`;
+        }
+    }
+    
+    // Апгрейды
+    for (let key of upgradeKeys) {
+        let uCost = getUpgradeCost(key);
+        cost += uCost;
+        let rulesTextUp = "";
+        if (upgradesDB[key] && upgradesDB[key].rules) rulesTextUp = upgradesDB[key].rules;
+        else if (extraUpgrades[key] && extraUpgrades[key].rules) rulesTextUp = extraUpgrades[key].rules;
+        else if (key === "Турель") rulesTextUp = "Круговой обстрел.";
+        if (rulesTextUp) text += `Апгрейд: ${key} [${uCost}] (${rulesTextUp})\n`;
+        else text += `Апгрейд: ${key} [${uCost}]\n`;
+    }
+    
+    // Навыки
+    for (let key of skillKeys) {
+        if (skillsDB[key] && isSkillAllowed(key)) {
+            let sk = skillsDB[key];
+            cost += sk.cost;
+            text += `Навык: ${key} [${sk.cost}]\n`;
+        }
+    }
+    
+    let div = document.createElement("div");
+    div.className = "unit";
+    div.innerText = text;
+    
+    const unitData = {
+        vehicleKey: vehicleKey,
+        crewWeapons: crewWeaponKeys,
+        weapons: weaponKeys,
+        upgrades: upgradeKeys,
+        skills: skillKeys
+    };
+    div.dataset.unit = JSON.stringify(unitData);
+    
+    let btnEdit = document.createElement("button");
+    btnEdit.innerText = "Редактировать";
+    btnEdit.style.marginRight = "5px";
+    btnEdit.onclick = function() { editUnit(div, unitData, cost); };
+    let btnDel = document.createElement("button");
+    btnDel.innerText = "Удалить";
+    btnDel.onclick = function() {
+        total -= cost;
+        document.getElementById("total").innerText = total;
+        div.remove();
+    };
+    div.appendChild(btnEdit);
+    div.appendChild(btnDel);
+    
+    const rosterDiv = document.getElementById("roster");
+    rosterDiv.appendChild(div);
+    total += cost;
 }
 
 function clearAll(){
@@ -716,7 +999,6 @@ function fillSponsors(){
     onSponsorChange();
 }
 
-let total=0;
 window.onload = () => {
     fillSponsors();
     updateAllLists();
